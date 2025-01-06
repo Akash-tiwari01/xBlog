@@ -73,7 +73,8 @@ const isExist = ({email,phoneNo},users)=>{
 //routes 
 
 app.get("/",(req,res)=>{
-    res.render("index");
+    const user = []
+    res.render("index",{user});
 })
 
 app.get('/registration',(req,res)=>{
@@ -87,7 +88,7 @@ app.post('/registration',(req,res)=>{
     if(auth)
     {
         const id = Date.now();
-        users.push({id,name,email,phoneNo,password});
+        users.push({id,name,email,phoneNo,password,isLogin:false});
         const success = writeUserData(users);
         if(success)
         {
@@ -101,6 +102,34 @@ app.post('/registration',(req,res)=>{
         res.send('<script>alert("user already Exist"); window.location.replace("/login")</script>');
     }
 })
+
+app.get('/login',(req,res)=>{
+    res.render("login.ejs");
+})
+
+app.post('/login',(req,res)=>{
+    const {email,password}=req.body;
+    const users = readUserData();
+    const user = users.filter((element)=>(element.email===email));
+    console.log(user);
+    if(user.length)
+    {
+        if(user[0].password===password)
+        {   
+            user[0].isLogin=true;
+            res.render("index.ejs",{user:user[0],users,blogs:{}});
+        }
+        else{
+            res.send('<script>alert("wrong password");window.location.replace("/login")</script>')
+        }
+
+    }
+    else{
+        res.send('<script>alert("user not exist");window.location.replace("/registration")</script>')
+    }
+})
+
+
 
 const port = process.env.PORT;
 app.listen(port,()=>{

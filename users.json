@@ -4,13 +4,23 @@
     "name": "Akash Tiwari",
     "email": "aka@gmail.com",
     "phoneNo": "9451183398",
-    "password": "123456"
+    "password": "123456",
+    "isLogin":false
   },
   {
     "id": 1735975075076,
     "name": "Anil Kumar",
     "email": "Anil@123",
     "phoneNo": "0987654321",
-    "password": "1234567"
+    "password": "1234567",
+    "isLogin":false
+  },
+  {
+    "id": 1736145782014,
+    "name": "Sreya ",
+    "email": "Sreya@123gmail.com",
+    "phoneNo": "123456789",
+    "password": "1234",
+    "isLogin":false
   }
 ]
