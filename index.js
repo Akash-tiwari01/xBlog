@@ -2,12 +2,30 @@ const express = require('express');
 const fs = require('fs');
 require('dotenv').config({path:"./process.env"});
 const app = express();
+const session = require('express-session');
 
 
 // Middleware
 app.use(express.urlencoded({extended:false}));
 app.use(express.json());
 app.use(express.static('public'));
+app.use(session({
+    secret:process.env.SESSION_KEY,
+    resave:false,
+    saveUninitialized:false,
+    cookie:{maxAge:3600000},
+}));
+
+const authentication = (req,res,next)=>{
+    if(req.session.user){
+        console.log(user);
+        next();
+    }
+    else{
+
+        res.send('<script>alert("user is not logged in ");window.location.replace("/login")</script>')
+    }
+}
 
 //set template engine 
 app.set("view engine", "ejs");
@@ -73,8 +91,8 @@ const isExist = ({email,phoneNo},users)=>{
 //routes 
 
 app.get("/",(req,res)=>{
-    const user = []
-    res.render("index",{user});
+   
+    res.render("login");
 })
 
 app.get('/registration',(req,res)=>{
@@ -88,7 +106,7 @@ app.post('/registration',(req,res)=>{
     if(auth)
     {
         const id = Date.now();
-        users.push({id,name,email,phoneNo,password,isLogin:false});
+        users.push({id,name,email,phoneNo,password});
         const success = writeUserData(users);
         if(success)
         {
@@ -116,8 +134,8 @@ app.post('/login',(req,res)=>{
     {
         if(user[0].password===password)
         {   
-            user[0].isLogin=true;
-            res.render("index.ejs",{user:user[0],users,blogs:{}});
+            req.session.user={...user[0]}
+            res.redirect('/user');
         }
         else{
             res.send('<script>alert("wrong password");window.location.replace("/login")</script>')
@@ -127,7 +145,34 @@ app.post('/login',(req,res)=>{
     else{
         res.send('<script>alert("user not exist");window.location.replace("/registration")</script>')
     }
+});
+
+app.get('/user',(req,res)=>{
+    const user = req.session.user;
+    const users = readUserData();
+    const blogs = readBlogData();
+    if(user){
+        console.log(user);
+        res.render('index.ejs',{user,blogs,users})
+    }
+    else{
+
+        res.send('<script>alert("user is not logged in ");window.location.replace("/login")</script>')
+    }
 })
+
+app.get('/create-blog',(req,res)=>{
+
+    const user = req.session.user;
+    if(user){
+        console.log(user);
+        res.render('newBlog',{user});
+    }
+    else{
+
+        res.send('<script>alert("user is not logged in ");window.location.replace("/login")</script>')
+    }
+});
 
 
 
