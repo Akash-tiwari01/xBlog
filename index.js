@@ -1,8 +1,15 @@
 const express = require('express');
 const fs = require('fs');
 require('dotenv').config({path:"./process.env"});
-const app = express();
+const bcrypt = require('bcrypt')
 const session = require('express-session');
+const mongoose = require('mongoose');
+const connectDB = require('./db')
+const User = require('./models/User')
+
+
+const app = express();
+connectDB();
 
 
 // Middleware
@@ -18,11 +25,9 @@ app.use(session({
 
 const authentication = (req,res,next)=>{
     if(req.session.user){
-        console.log(user);
         next();
     }
     else{
-
         res.send('<script>alert("user is not logged in ");window.location.replace("/login")</script>')
     }
 }
@@ -35,27 +40,27 @@ app.set("view engine", "ejs");
 const userFile = process.env.DATA_FILE;
 const blogFile = process.env.BLOG_FILE;
 
-const readUserData = ()=>{
-    try{
-         return JSON.parse(fs.readFileSync(userFile,'utf-8'))
-    }catch(err)
-    {
-        console.log(`Error in Reading user Data ${err}`);
-        return []
-    }
-}
+// const readUserData = ()=>{
+//     try{
+//          return JSON.parse(fs.readFileSync(userFile,'utf-8'))
+//     }catch(err)
+//     {
+//         console.log(`Error in Reading user Data ${err}`);
+//         return []
+//     }
+// }
 
-const writeUserData = (data)=>{
+// const writeUserData = (data)=>{
     
-    try{
-        fs.writeFileSync(userFile,JSON.stringify(data,null,2),"utf-8",)
-        return true;
-    }catch(err)
-    {
-        console.log(`Error in Writing user Data ${err}`);
-        return false;
-    }
-}
+//     try{
+//         fs.writeFileSync(userFile,JSON.stringify(data,null,2),"utf-8",)
+//         return true;
+//     }catch(err)
+//     {
+//         console.log(`Error in Writing user Data ${err}`);
+//         return false;
+//     }
+// }
 
 const readBlogData = ()=>{
     try{
@@ -79,10 +84,11 @@ const writeBlogData = (data)=>{
     }
 }   
 
-const isExist = ({email,phoneNo},users)=>{
-    const result = users.filter((element)=>(element.email===email || element.phoneNo === phoneNo))
-    if(result.length===0)
-        return true;
+const getUser = ({email,phoneNo})=>{
+    const user = User.findOne({$or:[{email,phoneNo}]})
+
+    if(user)  
+        return user;
     else 
         return false;
 }
@@ -99,22 +105,23 @@ app.get('/registration',(req,res)=>{
     res.render("registration.ejs");
 })
 
-app.post('/registration',(req,res)=>{
-    const users = readUserData();
+app.post('/registration', async (req,res)=>{
+    // const users = readUserData();
     const {name,email,phoneNo,password} = req.body
-    const auth = isExist({email,password},users)
-    if(auth)
+    const isUser = getUser({email,password});
+    if(isUser)
     {
-        const id = Date.now();
-        users.push({id,name,email,phoneNo,password});
-        const success = writeUserData(users);
-        if(success)
-        {
-            res.render('register.ejs',{name})
+        const hashedPassword = await bcrypt.hash(password,10);
+        const user = new User({name,email,phoneNo,password:hashedPassword});
+         
+        try{
+            await user.save();
+            res.render('register.ejs',{name}) 
         }
-        else{
+        catch(err){
             res.send('<script>alert("Registration not succefull /nregister again"); window.location.replace("/registration")</script>');
         }
+      
     }
     else{
         res.send('<script>alert("user already Exist"); window.location.replace("/login")</script>');
@@ -125,16 +132,16 @@ app.get('/login',(req,res)=>{
     res.render("login.ejs");
 })
 
-app.post('/login',(req,res)=>{
+app.post('/login',async (req,res)=>{
     const {email,password}=req.body;
-    const users = readUserData();
-    const user = users.filter((element)=>(element.email===email));
-    console.log(user);
-    if(user.length)
+    const user = await User.findOne({email});
+
+    if(user)
     {
-        if(user[0].password===password)
+        const isPassword = await bcrypt.compare(password,user.password);
+        if(isPassword)
         {   
-            req.session.user={...user[0]}
+            req.session.user={...user}
             res.redirect('/user');
         }
         else{
@@ -147,31 +154,20 @@ app.post('/login',(req,res)=>{
     }
 });
 
-app.get('/user',(req,res)=>{
+app.get('/user',authentication,(req,res)=>{
     const user = req.session.user;
-    const users = readUserData();
+    const users = User.find();
+    console.log(users)
     const blogs = readBlogData();
-    if(user){
-        console.log(user);
-        res.render('index.ejs',{user,blogs,users})
-    }
-    else{
+    res.render('index.ejs',{user,blogs,users});
 
-        res.send('<script>alert("user is not logged in ");window.location.replace("/login")</script>')
-    }
-})
+});
 
-app.get('/create-blog',(req,res)=>{
+app.get('/create-blog',authentication,(req,res)=>{
 
     const user = req.session.user;
-    if(user){
-        console.log(user);
-        res.render('newBlog',{user});
-    }
-    else{
-
-        res.send('<script>alert("user is not logged in ");window.location.replace("/login")</script>')
-    }
+    res.render('newBlog',{user});
+    
 });
 
 

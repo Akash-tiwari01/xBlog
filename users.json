@@ -5,7 +5,7 @@
     "email": "aka@gmail.com",
     "phoneNo": "9451183398",
     "password": "123456",
-    "isLogin":false
+    "isLogin": false
   },
   {
     "id": 1735975075076,
@@ -13,7 +13,7 @@
     "email": "Anil@123",
     "phoneNo": "0987654321",
     "password": "1234567",
-    "isLogin":false
+    "isLogin": false
   },
   {
     "id": 1736145782014,
@@ -21,6 +21,13 @@
     "email": "Sreya@123gmail.com",
     "phoneNo": "123456789",
     "password": "1234",
-    "isLogin":false
+    "isLogin": false
+  },
+  {
+    "id": 1736924451602,
+    "name": "Suman",
+    "email": "Suman@123gmail.com",
+    "phoneNo": "1234567890",
+    "hashedPassword": "$2b$10$LyrxtjIQOB9b9.hZL2yZGeJjPKT9FC2azWo31Q2mDOoczPhpRWG2a"
   }
 ]
